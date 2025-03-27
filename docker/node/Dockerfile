@@ -1,15 +1,13 @@
-FROM node:22.14.0-alpine
-
-RUN npm install -g @quasar/cli npm@latest
+FROM node:20-alpine
 
 WORKDIR /app
 
-COPY ./frontend/package*.json ./
+RUN apk add --no-cache wget
 
-RUN npm install
-
-COPY ./frontend .
+# Garantir que o servidor responda a solicitações de fora
+ENV HOST=0.0.0.0
+ENV PORT=8080
 
 EXPOSE 8080
 
-CMD [ "quasar", "dev" ]
+CMD ["sh", "-c", "echo 'Waiting for npm run dev to be executed from docker-compose'"]
