@@ -24,10 +24,13 @@ class CustomerFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'      => fake()->name,
-            'email'     => fake()->unique()->safeEmail(),
-            'cpf_cnpj'  => fake()->unique()->numerify('###########'),
-            'phone'     => fake()->phoneNumber
+            'name'          => fake()->name(),
+            'email'         => fake()->unique()->safeEmail(),
+            'cpf_cnpj'      => fake()->numerify('###########'),
+            'phone'         => fake()->phoneNumber(),
+            'address'       => fake()->address(),
+            'external_id'   => fake()->uuid(),
+
         ];
     }
 }
