@@ -35,7 +35,6 @@
                   <strong>Método:</strong> {{ getPaymentMethodName(payment.method) }}
                 </div>
 
-                <!-- Detalhes do cartão de crédito -->
                 <template v-if="payment.method === 'credit'">
                   <div><strong>Número do Cartão:</strong> **** **** **** {{ payment.details.cardNumber.slice(-4) }}</div>
                   <div><strong>Nome no Cartão:</strong> {{ payment.details.cardholderName }}</div>
@@ -43,12 +42,10 @@
                   <div><strong>Parcelas:</strong> {{ payment.details.installments }}x</div>
                 </template>
 
-                <!-- Detalhes do boleto -->
                 <template v-if="payment.method === 'boleto'">
                   <div><strong>Data de Vencimento:</strong> {{ payment.details.dueDate }}</div>
                 </template>
 
-                <!-- Detalhes do PIX -->
                 <template v-if="payment.method === 'pix'">
                   <div><strong>Pagamento imediato via QR Code ou código PIX</strong></div>
                 </template>
@@ -78,7 +75,6 @@ export default {
   name: 'PaymentConfirmationPage',
   data() {
     return {
-      // Dados mockados - em produção viriam de um store ou query params
       payment: {
         customer: {
           name: 'João Silva',
@@ -113,13 +109,10 @@ export default {
       // Simulando um ID de pagamento
       const paymentId = 'pay_' + Math.random().toString(36).substr(2, 9)
 
-      // Redirecionar para a página de agradecimento
       this.$router.push(`/thank-you/${paymentId}`)
     }
   },
-  // Em uma implementação real, buscaríamos os dados do payment state ou query params
   created() {
-    // Exemplo de lógica para diferentes métodos de pagamento
     if (this.$route.query.method === 'boleto') {
       this.payment.method = 'boleto'
       this.payment.details = {

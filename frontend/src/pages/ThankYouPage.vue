@@ -32,14 +32,12 @@ export default {
       return new Date().toLocaleString()
     },
     paymentMethodName() {
-      // Aqui estamos mockando, mas idealmente seria obtido do store ou da API
       const methods = {
         credit: 'Cartão de Crédito',
         boleto: 'Boleto Bancário',
         pix: 'Pix'
       }
 
-      // Vamos fingir que temos essa informação (normalmente seria armazenada no estado)
       const mockMethod = this.paymentId.includes('1') ? 'credit' :
                          this.paymentId.includes('2') ? 'boleto' : 'pix'
 
