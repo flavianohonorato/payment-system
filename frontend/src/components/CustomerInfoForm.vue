@@ -1,6 +1,6 @@
 <template>
   <div>
-    <q-form @submit="onSubmit" class="q-gutter-md">
+    <q-form @submit.prevent="saveCustomerData" class="q-gutter-md">
       <q-input
         filled
         v-model="form.name"
@@ -36,10 +36,6 @@
         hint="Apenas números"
         :rules="[val => !!val || 'Documento é obrigatório']"
       />
-
-      <div>
-        <q-btn label="Continuar" type="submit" color="accent" text-color="white"/>
-      </div>
     </q-form>
   </div>
 </template>
@@ -63,10 +59,17 @@ export default {
       form: { ...this.customer }
     }
   },
+  watch: {
+    form: {
+      handler(newData) {
+        this.$emit('update:customer', newData)
+      },
+      deep: true
+    }
+  },
   methods: {
-    onSubmit() {
+    saveCustomerData() {
       this.$emit('update:customer', this.form)
-      this.$emit('submit')
     }
   }
 }

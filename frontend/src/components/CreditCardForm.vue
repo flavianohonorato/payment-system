@@ -47,7 +47,7 @@
       />
 
       <div>
-        <q-btn label="Pagar Agora" type="submit" color="accent" text-color="white"/>
+        <q-btn label="Continuar" type="submit" color="accent" text-color="white"/>
       </div>
     </q-form>
   </div>
@@ -56,6 +56,12 @@
 <script>
 export default {
   name: 'CreditCardForm',
+  props: {
+    initialData: {
+      type: Object,
+      default: null
+    }
+  },
   data() {
     return {
       form: {
@@ -78,6 +84,11 @@ export default {
   methods: {
     onSubmit() {
       this.$emit('submit', this.form)
+    }
+  },
+  created() {
+    if (this.initialData) {
+      this.form = { ...this.initialData }
     }
   }
 }
