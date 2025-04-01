@@ -6,7 +6,7 @@
       </div>
 
       <div class="text-h2" style="opacity:.4">
-        Oops. Nothing here...
+        Oops... Página não encontrada
       </div>
 
       <q-btn
@@ -15,13 +15,15 @@
         text-color="blue"
         unelevated
         to="/"
-        label="Go Home"
+        label="Voltar para a Página Inicial"
         no-caps
       />
     </div>
   </div>
 </template>
 
-<script setup>
-//
+<script>
+export default {
+  name: 'ErrorNotFound'
+}
 </script>

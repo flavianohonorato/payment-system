@@ -3,6 +3,7 @@
 namespace Tests\Unit\Observers;
 
 use App\Models\AsaasCustomer;
+use App\Services\Asaas\AsaasClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\Customer;
@@ -22,6 +23,11 @@ class CustomerObserverTest extends TestCase
         parent::setUp();
 
         $this->asaasService = Mockery::mock(AsaasCustomerService::class);
+        $this->mock(AsaasClient::class, function ($mock) {
+            $mock->shouldReceive('post')
+                ->with('/v3/customers', Mockery::any())
+                ->andReturn(['id' => 'cus_123']);
+        });
         $this->app->instance(AsaasCustomerService::class, $this->asaasService);
     }
 

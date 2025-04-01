@@ -23,11 +23,13 @@ class CustomerFactory extends Factory
      */
     public function definition(): array
     {
+        $fakerBr = \Faker\Factory::create('pt_BR');
+
         return [
             'name'          => fake()->name(),
             'email'         => fake()->unique()->safeEmail(),
-            'cpf_cnpj'      => fake()->numerify('###########'),
-            'phone'         => fake()->phoneNumber(),
+            'cpf_cnpj'      => $fakerBr->cpf(false),
+            'phone'         => preg_replace('/[^0-9]/', '', $fakerBr->phoneNumber),
             'address'       => fake()->address(),
             'external_id'   => fake()->uuid(),
 

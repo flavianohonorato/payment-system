@@ -18,7 +18,7 @@ class AsaasService implements AsaasServiceInterface
      */
     public function createCustomer(CustomerDTO $customer): array
     {
-        return $this->client->post('/api/v3/customers', $customer->toArray());
+        return $this->client->post('/v3/customers', $customer->toArray());
     }
 
     /**
@@ -29,7 +29,7 @@ class AsaasService implements AsaasServiceInterface
      */
     public function updateCustomer(string $customerId, CustomerDTO $customer): array
     {
-        return $this->client->put("/api/v3/customers/{$customerId}", $customer->toArray());
+        return $this->client->put("/v3/customers/{$customerId}", $customer->toArray());
     }
 
     /**
@@ -39,7 +39,7 @@ class AsaasService implements AsaasServiceInterface
      */
     public function getCustomer(string $customerId): array
     {
-        return $this->client->get("/api/v3/customers/{$customerId}");
+        return $this->client->get("/v3/customers/{$customerId}");
     }
 
     /**
@@ -49,7 +49,7 @@ class AsaasService implements AsaasServiceInterface
      */
     public function createPayment(PaymentDTO $payment): array
     {
-        return $this->client->post('/api/v3/payments', $payment->toArray());
+        return $this->client->post('/v3/payments', $payment->toArray());
     }
 
     /**
@@ -59,7 +59,7 @@ class AsaasService implements AsaasServiceInterface
      */
     public function getPayment(string $paymentId): array
     {
-        return $this->client->get("/api/v3/payments/{$paymentId}");
+        return $this->client->get("/v3/payments/{$paymentId}");
     }
 
     /**
@@ -69,7 +69,7 @@ class AsaasService implements AsaasServiceInterface
      */
     public function cancelPayment(string $paymentId): array
     {
-        return $this->client->delete("/api/v3/payments/{$paymentId}");
+        return $this->client->delete("/v3/payments/{$paymentId}");
     }
 
     /**
@@ -79,7 +79,7 @@ class AsaasService implements AsaasServiceInterface
      */
     public function getBankSlipBarCode(string $paymentId): array
     {
-        return $this->client->get("/api/v3/payments/{$paymentId}/identificationField");
+        return $this->client->get("/v3/payments/{$paymentId}/identificationField");
     }
 
     /**
@@ -89,6 +89,6 @@ class AsaasService implements AsaasServiceInterface
      */
     public function getPixQrCode(string $paymentId): array
     {
-        return $this->client->get("/api/v3/payments/{$paymentId}/pixQrCode");
+        return $this->client->get("/v3/payments/{$paymentId}/pixQrCode");
     }
 }
