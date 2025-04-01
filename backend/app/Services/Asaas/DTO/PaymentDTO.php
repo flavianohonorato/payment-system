@@ -45,4 +45,12 @@ readonly class PaymentDTO
     {
         return $this->customerId;
     }
+
+    /**
+     * @return string
+     */
+    public function getAsaasCustomerId(): string
+    {
+        return $this->asaasCustomerId;
+    }
 }

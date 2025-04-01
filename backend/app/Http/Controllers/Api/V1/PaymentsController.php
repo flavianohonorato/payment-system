@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Payments\ProcessPaymentRequest;
 use App\Http\Resources\PaymentResource;
+use App\Models\Customer;
 use App\Models\Payment;
 use App\Services\Asaas\AsaasPaymentService;
 use App\Services\Asaas\DTO\PaymentDTO;
@@ -27,35 +28,52 @@ class PaymentsController extends Controller
     public function process(ProcessPaymentRequest $request): PaymentResource|JsonResponse
     {
         try {
-            $asaasCustomerId = $this->paymentService->getOrCreateCustomer(
-                $request->validated('customer'),
-                $request->validated('customer_id')
-            );
+            $data = $request->validated();
+            $customerData = $data['customer'];
+            $customer = Customer::query()->where('cpf_cnpj', $customerData['cpf_cnpj'])->first();
+
+            if (!$customer) {
+                $customer = Customer::create([
+                    'name' => $customerData['name'],
+                    'email' => $customerData['email'],
+                    'cpf_cnpj' => $customerData['cpf_cnpj'],
+                    'external_id' => $customerData['external_id'] ?? null,
+                ]);
+            }
+
+            $asaasCustomerId = $this->paymentService->getOrCreateCustomer($customerData, $customer->id);
+
+            if (empty($asaasCustomerId)) {
+                throw new Exception('Não foi possível obter ou criar um ID de cliente Asaas válido');
+            }
 
             $paymentDTO = new PaymentDTO(
-                asaasCustomerId: $asaasCustomerId,
-                customerId: $request->validated('customer_id'),
-                billingType: BillingTypeEnum::from($request->validated('billing_type')),
-                value: (float) $request->validated('value'),
-                description: $request->validated('description'),
-                dueDate: new DateTime($request->validated('due_date'))
+                $asaasCustomerId,
+                $customer->id,
+                BillingTypeEnum::from($data['billing_type']),
+                $data['value'],
+                $data['description'],
+                new DateTime($data['due_date'])
             );
 
             $payment = $this->paymentService->processPayment($paymentDTO);
 
-            return new PaymentResource($payment);
+
+            return new PaymentResource($payment)->additional([
+                'success' => true,
+                'message' => 'Pagamento processado com sucesso'
+            ]);
         } catch (Exception $e) {
             logger('Erro ao processar pagamento', [
+                'data' => $data ?? $request->all(),
                 'message' => $e->getMessage(),
-                'data' => $request->validated(),
-                'trace' => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erro ao processar pagamento',
-                'error' => $e->getMessage()
-            ], 422);
+                'message' => 'Erro ao processar pagamento: ' . $e->getMessage()
+            ], 500);
         }
     }
 
