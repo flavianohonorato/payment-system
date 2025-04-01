@@ -33,14 +33,38 @@
             title="Detalhes do Pagamento"
             icon="attach_money"
           >
-            <div v-if="paymentMethod === 'credit'">
-              <credit-card-form @submit="processPayment" />
-            </div>
-            <div v-else-if="paymentMethod === 'boleto'">
-              <boleto-form @submit="processPayment" />
-            </div>
-            <div v-else-if="paymentMethod === 'pix'">
-              <pix-form @submit="processPayment" />
+            <div v-if="paymentMethod">
+              <div class="row items-center q-mb-md">
+                <div class="col">
+                  <q-chip
+                    class="payment-method-chip"
+                    :color="getMethodColor(paymentMethod)"
+                    text-color="white"
+                    icon="payment"
+                  >
+                    {{ getMethodName(paymentMethod) }}
+                  </q-chip>
+                </div>
+                <div class="col-auto">
+                  <q-btn
+                    flat
+                    color="accent"
+                    label="Trocar método"
+                    icon="swap_horiz"
+                    @click="changePaymentMethod"
+                  />
+                </div>
+              </div>
+
+              <div v-if="paymentMethod === 'credit'">
+                <credit-card-form @submit="processPayment" />
+              </div>
+              <div v-else-if="paymentMethod === 'boleto'">
+                <boleto-form @submit="processPayment" />
+              </div>
+              <div v-else-if="paymentMethod === 'pix'">
+                <pix-form @submit="processPayment" />
+              </div>
             </div>
           </q-step>
         </q-stepper>
@@ -70,10 +94,10 @@ export default {
       step: 1,
       paymentMethod: null,
       customer: {
-        name: '',
-        email: '',
-        phone: '',
-        document: ''
+        name: 'Flaviano Honorato',
+        email: 'flaviano.honorato@gmail.com',
+        phone: '98987654321',
+        document: '01258638371'
       }
     }
   },
@@ -98,6 +122,25 @@ export default {
           method: this.paymentMethod
         }
       })
+    },
+    changePaymentMethod() {
+      this.step = 2
+    },
+    getMethodName(method) {
+      const methods = {
+        credit: 'Cartão de Crédito',
+        boleto: 'Boleto Bancário',
+        pix: 'PIX'
+      }
+      return methods[method] || method
+    },
+    getMethodColor(method) {
+      const colors = {
+        credit: 'primary',
+        boleto: 'secondary',
+        pix: 'accent'
+      }
+      return colors[method] || 'primary'
     }
   }
 }
@@ -124,5 +167,9 @@ export default {
   .q-stepper__title {
     color: #174760 !important;
   }
+}
+
+.payment-method-chip {
+  font-weight: bold;
 }
 </style>
