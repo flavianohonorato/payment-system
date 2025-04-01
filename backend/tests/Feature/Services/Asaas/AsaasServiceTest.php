@@ -9,8 +9,12 @@ use App\Services\Asaas\DTO\PaymentDTO;
 use App\Services\Asaas\Enums\BillingTypeEnum;
 use App\Services\Asaas\Enums\PaymentStatusEnum;
 use App\Services\Asaas\Exceptions\AsaasApiException;
+use DateTime;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
 use Mockery;
 use Tests\TestCase;
 
@@ -20,31 +24,43 @@ class AsaasServiceTest extends TestCase
 
     /**
      * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $mock = new MockHandler([
+            new Response(200, [], json_encode([
+                'id' => 'cus_000000000001',
+                'name' => 'Test Customer',
+            ])),
+        ]);
+
+        $handlerStack = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handlerStack]);
+
+        $this->app->instance(Client::class, $client);
+
+        $this->instance(
+            AsaasClient::class,
+            Mockery::mock(AsaasClient::class, function ($mock) {
+                $mock->shouldReceive('post')
+                    ->with('customers', Mockery::any())
+                    ->andReturn([
+                        'id'    => 'cus_000000000001',
+                        'name'  => 'Test Customer',
+                    ]);
+            })
+        );
+    }
+
+    /**
+     * @return void
      * @throws AsaasApiException
      */
     public function test_create_customer()
     {
         $mockClient = Mockery::mock(AsaasClient::class);
-
-        $customerData = [
-            'name'      => 'Test Customer',
-            'email'     => 'test@example.com',
-            'cpfCnpj'   => '12345678909',
-        ];
-
-        $expectedResponse = [
-            'id'        => 'cus_123',
-            'name'      => 'Test Customer',
-            'email'     => 'test@example.com',
-            'cpfCnpj'   => '12345678909',
-        ];
-
-        $mockClient->shouldReceive('post')
-            ->once()
-            ->with('/api/v3/customers', $customerData)
-            ->andReturn($expectedResponse);
-
-        $service = new AsaasService($mockClient);
 
         $customerDTO = new CustomerDTO(
             name: 'Test Customer',
@@ -52,9 +68,30 @@ class AsaasServiceTest extends TestCase
             cpfCnpj: '12345678909'
         );
 
+        $expectedResponse = [
+            'id' => 'cus_123',
+            'name' => 'Test Customer',
+            'email' => 'test@example.com',
+            'cpfCnpj' => '12345678909'
+        ];
+
+        $mockClient->shouldReceive('post')
+            ->once()
+            ->with('/v3/customers', [
+                'name' => 'Test Customer',
+                'email' => 'test@example.com',
+                'cpfCnpj' => '12345678909',
+                'phone' => null,
+                'address' => null
+            ])
+            ->andReturn($expectedResponse);
+
+        $service = new AsaasService($mockClient);
+
         $response = $service->createCustomer($customerDTO);
 
         $this->assertEquals($expectedResponse, $response);
+
     }
 
     /**
@@ -65,41 +102,43 @@ class AsaasServiceTest extends TestCase
     {
         $mockClient = Mockery::mock(AsaasClient::class);
 
-        $dueDate = Carbon::now()->addDays(5);
-
-        $paymentData = [
-            'customer'      => 'cus_123',
-            'billingType'   => 'BOLETO',
-            'value'         => 100.50,
-            'description'   => 'Test payment',
-            'dueDate'       => $dueDate->format('Y-m-d'),
-        ];
+        $paymentDTO = new PaymentDTO(
+            asaasCustomerId: 'cus_123',
+            customerId: 123,
+            billingType: BillingTypeEnum::BOLETO,
+            value: 100.50,
+            description: 'Test payment',
+            dueDate: new DateTime('2025-04-05')
+        );
 
         $expectedResponse = [
-            'id'            => 'pay_123',
+            'id'            => 'pay_123456789',
             'customer'      => 'cus_123',
-            'billingType'   => BillingTypeEnum::BOLETO,
             'value'         => 100.50,
-            'status'        => PaymentStatusEnum::PENDING,
-            'dueDate'       => $dueDate->format('Y-m-d'),
-            'invoiceUrl'    => 'https://asaas.com/invoice',
-            'bankSlipUrl'   => 'https://asaas.com/bankslip',
+            'status'        => PaymentStatusEnum::PENDING->value,
+            'billingType'   => BillingTypeEnum::BOLETO->value,
+            'dueDate'       => '2025-04-05',
+            'invoiceUrl'    => 'https://example.com/invoice',
+            'bankSlipUrl'   => 'https://example.com/bankslip'
         ];
 
         $mockClient->shouldReceive('post')
             ->once()
-            ->with('/api/v3/payments', $paymentData)
+            ->withArgs(function (string $endpoint, array $data) {
+                return $endpoint === '/v3/payments'
+                    && $data === [
+                        'customer'      => 'cus_123',
+                        'billingType'   => BillingTypeEnum::BOLETO->value,
+                        'value'         => 100.50,
+                        'description'   => 'Test payment',
+                        'dueDate'       => '2025-04-05'
+                    ];
+            })
             ->andReturn($expectedResponse);
 
-        $service = new AsaasService($mockClient);
 
-        $paymentDTO = new PaymentDTO(
-            customer: 'cus_123',
-            billingType: BillingTypeEnum::BOLETO,
-            value: 100.50,
-            description: 'Test payment',
-            dueDate: $dueDate
-        );
+
+        $service = new AsaasService($mockClient);
 
         $response = $service->createPayment($paymentDTO);
 
@@ -117,16 +156,16 @@ class AsaasServiceTest extends TestCase
         $paymentId = 'pay_123';
 
         $expectedResponse = [
-            'id' => $paymentId,
-            'customer'  => 'cus_123',
-            'billingType' => BillingTypeEnum::BOLETO,
-            'value'     => 100.50,
-            'status'    => PaymentStatusEnum::PENDING,
+            'id'            => $paymentId,
+            'customer'      => 'cus_123',
+            'billingType'   => BillingTypeEnum::BOLETO->value,
+            'value'         => 100.50,
+            'status'        => PaymentStatusEnum::PENDING->value,
         ];
 
         $mockClient->shouldReceive('get')
             ->once()
-            ->with("/api/v3/payments/{$paymentId}")
+            ->with("/v3/payments/{$paymentId}")
             ->andReturn($expectedResponse);
 
         $service = new AsaasService($mockClient);
@@ -153,7 +192,7 @@ class AsaasServiceTest extends TestCase
 
         $mockClient->shouldReceive('delete')
             ->once()
-            ->with("/api/v3/payments/{$paymentId}")
+            ->with("/v3/payments/{$paymentId}")
             ->andReturn($expectedResponse);
 
         $service = new AsaasService($mockClient);
@@ -179,7 +218,7 @@ class AsaasServiceTest extends TestCase
 
         $mockClient->shouldReceive('get')
             ->once()
-            ->with("/api/v3/payments/{$paymentId}/identificationField")
+            ->with("/v3/payments/{$paymentId}/identificationField")
             ->andReturn($expectedResponse);
 
         $service = new AsaasService($mockClient);
@@ -206,7 +245,7 @@ class AsaasServiceTest extends TestCase
 
         $mockClient->shouldReceive('get')
             ->once()
-            ->with("/api/v3/payments/{$paymentId}/pixQrCode")
+            ->with("/v3/payments/{$paymentId}/pixQrCode")
             ->andReturn($expectedResponse);
 
         $service = new AsaasService($mockClient);
@@ -224,32 +263,32 @@ class AsaasServiceTest extends TestCase
     {
         $mockClient = Mockery::mock(AsaasClient::class);
 
-        $customerId = 'cus_123';
-
-        $customerData = [
-            'name' => 'Updated Customer',
-            'email' => 'updated@example.com',
-        ];
+        $customerDTO = new CustomerDTO(
+            name: 'Updated Customer',
+            email: 'updated@example.com',
+            cpfCnpj: '12345678901'
+        );
 
         $expectedResponse = [
-            'id'    => $customerId,
-            'name'  => 'Updated Customer',
-            'email' => 'updated@example.com',
+            'id'        => 'cus_123',
+            'name'      => 'Updated Customer',
+            'email'     => 'updated@example.com',
+            'cpfCnpj'   => '12345678901'
         ];
 
         $mockClient->shouldReceive('put')
             ->once()
-            ->with("/api/v3/customers/{$customerId}", $customerData)
+            ->with('/v3/customers/cus_123', [
+                'name'      => 'Updated Customer',
+                'email'     => 'updated@example.com',
+                'cpfCnpj'   => '12345678901',
+                'phone'     => null,
+                'address'   => null
+            ])
             ->andReturn($expectedResponse);
 
         $service = new AsaasService($mockClient);
-
-        $customerDTO = new CustomerDTO(
-            name: 'Updated Customer',
-            email: 'updated@example.com'
-        );
-
-        $response = $service->updateCustomer($customerId, $customerDTO);
+        $response = $service->updateCustomer('cus_123', $customerDTO);
 
         $this->assertEquals($expectedResponse, $response);
     }
@@ -273,7 +312,7 @@ class AsaasServiceTest extends TestCase
 
         $mockClient->shouldReceive('get')
             ->once()
-            ->with("/api/v3/customers/{$customerId}")
+            ->with("/v3/customers/{$customerId}")
             ->andReturn($expectedResponse);
 
         $service = new AsaasService($mockClient);
@@ -283,6 +322,9 @@ class AsaasServiceTest extends TestCase
         $this->assertEquals($expectedResponse, $response);
     }
 
+    /**
+     * @return void
+     */
     protected function tearDown(): void
     {
         Mockery::close();
