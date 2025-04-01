@@ -93,9 +93,10 @@ class AsaasClient
     protected function request(string $method, string $endpoint, array $options = []): array
     {
         try {
+            $endpoint = '/v3/' . ltrim($endpoint, '/');
             $response = $this->client->request($method, $endpoint, $options);
-
             $contents = $response->getBody()->getContents();
+
             if (empty($contents)) {
                 return [];
             }

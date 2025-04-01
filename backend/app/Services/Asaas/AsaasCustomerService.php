@@ -57,48 +57,6 @@ class AsaasCustomerService
     }
 
     /**
-     * @param string $asaasId
-     * @return array
-     * @throws AsaasApiException
-     */
-    public function fetchCustomerFromAsaas(string $asaasId): array
-    {
-        return $this->asaasClient->get('customers/' . $asaasId);
-    }
-
-    /**
-     * @param Customer $customer
-     * @return mixed|null
-     */
-    public function syncCustomerData(Customer $customer): mixed
-    {
-        if (!$customer->asaasCustomer) {
-            return null;
-        }
-
-        try {
-            $response = $this->fetchCustomerFromAsaas($customer->asaasCustomer->asaas_id);
-
-            $customer->asaasCustomer->update([
-                'deleted'               => $response['deleted'] ?? false,
-                'notification_disabled' => $response['notificationDisabled'] ?? false,
-                'additional_emails'     => $response['additionalEmails'] ?? null,
-                'asaas_data'            => $response,
-            ]);
-
-            return $customer->asaasCustomer;
-        } catch (AsaasApiException $e) {
-            logger('Failed to sync customer data from Asaas', [
-                'customer_id'   => $customer->id,
-                'asaas_id'      => $customer->asaasCustomer->asaas_id,
-                'error'         => $e->getMessage()
-            ]);
-
-            return null;
-        }
-    }
-
-    /**
      * @param Customer $customer
      * @return array
      */
