@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services\Asaas;
 
 use App\Services\Asaas\Exceptions\AsaasApiException;
+use Faker\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Services\Asaas\AsaasClient;
@@ -66,27 +67,53 @@ class AsaasCustomerServiceTest extends TestCase
      */
     public function test_update_customer_on_asaas()
     {
-        $customer = Customer::factory()->create();
+        $fakerBr = Factory::create('pt_BR');
+        $cpf = $fakerBr->cpf(false);
 
-        $asaasId = 'cus_' . uniqid();
-
-        AsaasCustomer::factory()->create([
-            'customer_id' => $customer->id,
-            'asaas_id' => $asaasId,
+        $customer = Customer::factory()->create([
+            'name'      => 'Test Customer',
+            'email'     => 'test@example.com',
+            'cpf_cnpj'  => $cpf,
+            'phone'     => '11999999999',
+            'address'   => 'Rua de Teste, 123',
         ]);
 
-        $asaasResponse = [
-            'id' => $asaasId,
-            'name' => 'Updated Name',
-            'email' => 'updated@example.com',
-        ];
+        $asaasId = 'cus_000001';
+
+        AsaasCustomer::factory()->create([
+            'customer_id'   => $customer->id,
+            'asaas_id'      => $asaasId,
+        ]);
 
         $customer->refresh();
+
+        $expectedData = [
+            'name'              => 'Test Customer',
+            'email'             => 'test@example.com',
+            'phone'             => '11999999999',
+            'mobilePhone'       => '11999999999',
+            'cpfCnpj'           => $cpf,
+            'externalReference' => (string) $customer->id,
+            'address'           => 'Rua de Teste, 123',
+            'addressNumber'     => null,
+            'complement'        => null,
+            'province'          => null,
+            'postalCode'        => null
+        ];
+
+        $asaasResponse = [
+            'id'    => $asaasId,
+            'name'  => 'Test Customer',
+            'email' => 'test@example.com',
+        ];
 
         $this->asaasClient
             ->shouldReceive('put')
             ->once()
-            ->with('customers/' . $asaasId, Mockery::any())
+            ->withArgs(function($endpoint, $data) use ($asaasId, $expectedData) {
+                return $endpoint === 'customers/' . $asaasId &&
+                    $data === $expectedData;
+            })
             ->andReturn($asaasResponse);
 
         $result = $this->service->updateCustomerOnAsaas($customer);
