@@ -1,43 +1,32 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header elevated class="bg-white text-primary">
       <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
-
-        <q-toolbar-title>
-          Quasar App
+        <q-toolbar-title class="row items-center no-wrap">
+          <q-icon name="shopping_cart" size="28px" class="q-mr-sm accent-color" />
+          <span class="text-weight-bold primary-color">Perfect Pay</span>
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <q-space />
+
+        <div class="q-gutter-sm row items-center no-wrap">
+          <q-btn flat round dense icon="search" class="primary-color" />
+          <q-btn flat round dense icon="person" class="primary-color" />
+          <q-btn flat round dense icon="shopping_cart" class="primary-color">
+            <q-badge color="accent" floating>2</q-badge>
+          </q-btn>
+          <q-btn to="/" flat no-caps label="Home" class="desktop-only primary-color" />
+          <q-btn to="/payment" flat no-caps label="Checkout" class="desktop-only accent-color" />
+        </div>
+      </q-toolbar>
+
+      <!-- Menu para dispositivos móveis -->
+      <q-toolbar class="mobile-only bg-primary text-white">
+        <q-btn flat dense to="/" label="Home" />
+        <q-space />
+        <q-btn flat dense to="/payment" label="Checkout" />
       </q-toolbar>
     </q-header>
-
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
-    >
-      <q-list>
-        <q-item-label
-          header
-        >
-          Essential Links
-        </q-item-label>
-
-        <EssentialLink
-          v-for="link in linksList"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
-    </q-drawer>
 
     <q-page-container>
       <router-view />
@@ -45,58 +34,46 @@
   </q-layout>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import EssentialLink from 'components/EssentialLink.vue'
-
-const linksList = [
-  {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev'
-  },
-  {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework'
-  },
-  {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev'
-  },
-  {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
-  },
-  {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
-  },
-  {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
-  }
-]
-
-const leftDrawerOpen = ref(false)
-
-function toggleLeftDrawer () {
-  leftDrawerOpen.value = !leftDrawerOpen.value
+<script>
+export default {
+  name: 'MainLayout'
 }
 </script>
+
+<style lang="scss" scoped>
+.desktop-only {
+  @media (max-width: 600px) {
+    display: none;
+  }
+}
+
+.mobile-only {
+  @media (min-width: 601px) {
+    display: none;
+  }
+}
+
+.primary-color {
+  color: #174760 !important;
+}
+
+.accent-color {
+  color: #E0730E !important;
+}
+
+.secondary-color {
+  color: #017A7E !important;
+}
+
+.bg-primary {
+  background-color: #174760 !important;
+}
+
+.bg-accent {
+  background-color: #E0730E !important;
+}
+
+.bg-secondary {
+  background-color: #017A7E !important;
+}
+</style>
